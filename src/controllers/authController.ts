@@ -33,6 +33,23 @@ type LoginInput = z.infer<typeof loginSchema>;
 type RegisterInput = z.infer<typeof registerSchema>;
 type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
+const updateProfileSchema = z.object({
+  name: z.string().min(1, 'Name is required').optional(),
+  phone: z.string().min(1, 'Phone is required').optional(),
+});
+
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Old password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  confirmPassword: z.string().min(1, 'Please confirm your new password'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "New passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
     const validation = registerSchema.safeParse(req.body);
@@ -150,6 +167,95 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
 export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
     return res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
+  try {
+    const validation = updateProfileSchema.safeParse(req.body || {});
+    if (!validation.success) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validation.error.issues.map((e: z.ZodIssue) => e.message) 
+      });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const updatedUser = await userService.updateUser(String(req.user.id), validation.data);
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { password, ...userProfile } = updatedUser;
+    return res.status(200).json({
+      message: 'Profile updated successfully',
+      user: userProfile,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
+  try {
+    const validation = changePasswordSchema.safeParse(req.body || {});
+    if (!validation.success) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validation.error.issues.map((e: z.ZodIssue) => e.message) 
+      });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const { oldPassword, newPassword } = validation.data as ChangePasswordInput;
+    const user = await userService.findUserById(String(req.user.id));
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password || '');
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect old password' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await userService.updatePassword(user.email, hashedPassword);
+
+    return res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadProfileImage = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload an image' });
+    }
+
+    const imageUrl = `/uploads/profile-images/${req.file.filename}`;
+    const updatedUser = await userService.updateProfileImage(String(req.user.id), imageUrl);
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Profile image uploaded successfully',
+      profileImage: imageUrl,
+    });
   } catch (error) {
     next(error);
   }

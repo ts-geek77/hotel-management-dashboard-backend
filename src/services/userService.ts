@@ -34,3 +34,26 @@ export const updatePassword = async (email: string, password: string): Promise<U
   const result = await pool.query(query, [password, email]);
   return result.rows[0] || null;
 };
+
+export const updateUser = async (id: string, data: { name?: string; phone?: string }): Promise<User | null> => {
+  const { name, phone } = data;
+  const query = `
+    UPDATE users 
+    SET name = COALESCE($1, name), phone = COALESCE($2, phone), "updatedAt" = NOW() 
+    WHERE id = $3 
+    RETURNING *
+  `;
+  const result = await pool.query(query, [name, phone, id]);
+  return result.rows[0] || null;
+};
+
+export const updateProfileImage = async (id: string, profileImage: string): Promise<User | null> => {
+  const query = `
+    UPDATE users 
+    SET "profileImage" = $1, "updatedAt" = NOW() 
+    WHERE id = $2 
+    RETURNING *
+  `;
+  const result = await pool.query(query, [profileImage, id]);
+  return result.rows[0] || null;
+};
