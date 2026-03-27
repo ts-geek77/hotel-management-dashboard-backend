@@ -39,6 +39,7 @@ export interface Guest {
   name: string;
   email: string;
   phone: string;
+  roomNumber?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -48,6 +49,7 @@ export interface GuestListEntry {
   name: string;
   email: string;
   phone: string;
+  roomNumber?: string;
 }
 
 export interface GuestDetail extends Guest {

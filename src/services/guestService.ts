@@ -2,7 +2,22 @@ import { pool } from '../config';
 import { GuestListEntry, GuestDetail, Booking } from '../types';
 
 export const getAllGuests = async (): Promise<GuestListEntry[]> => {
-  const query = 'SELECT id, name, email, phone FROM guests ORDER BY name ASC';
+  const query = `
+    SELECT 
+      g.id, 
+      g.name, 
+      g.email, 
+      g.phone,
+      r."roomNumber"
+    FROM guests g
+    LEFT JOIN (
+      SELECT DISTINCT ON ("guestId") "guestId", "roomId"
+      FROM bookings
+      ORDER BY "guestId", "checkIn" DESC
+    ) b ON g.id = b."guestId"
+    LEFT JOIN rooms r ON b."roomId" = r.id
+    ORDER BY g.name ASC
+  `;
   const result = await pool.query(query);
   return result.rows;
 };
