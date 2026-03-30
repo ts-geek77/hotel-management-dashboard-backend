@@ -56,6 +56,12 @@ export interface GuestDetail extends Guest {
   bookingHistory: Booking[];
 }
 
+export interface CreateGuestInput {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export interface Booking {
   id: number;
   guestId?: number;

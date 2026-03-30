@@ -44,3 +44,13 @@ export const getGuestById = async (id: number): Promise<GuestDetail | null> => {
     bookingHistory: bookingsResult.rows
   };
 };
+
+export const createGuest = async (data: import('../types').CreateGuestInput): Promise<import('../types').Guest> => {
+  const query = `
+    INSERT INTO guests (name, email, phone, "createdAt", "updatedAt")
+    VALUES ($1, $2, $3, NOW(), NOW())
+    RETURNING *
+  `;
+  const result = await pool.query(query, [data.name, data.email, data.phone]);
+  return result.rows[0];
+};
