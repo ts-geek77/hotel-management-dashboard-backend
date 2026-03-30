@@ -1,5 +1,5 @@
 import { pool } from '../config';
-import { DashboardStats, RevenueTrend, Booking, RoomStatus } from '../types';
+import { DashboardStats, RevenueTrend, Booking, RoomStatus, DashboardData } from '../types';
 
 export const getStats = async (): Promise<DashboardStats> => {
   const statsQuery = `
@@ -39,8 +39,12 @@ export const getRevenueTrends = async (): Promise<RevenueTrend[]> => {
 
 export const getRecentBookings = async (): Promise<Booking[]> => {
   const query = `
-    SELECT * FROM bookings 
-    ORDER BY "createdAt" DESC 
+    SELECT b.id, b."guestId", b."roomType", b."checkIn", b."checkOut", b.status, b.price,
+           b."userId", b."roomId", b."createdAt", b."updatedAt",
+           g.name as "guestName"
+    FROM bookings b
+    INNER JOIN guests g ON b."guestId" = g.id
+    ORDER BY b."createdAt" DESC 
     LIMIT 5
   `;
   const result = await pool.query(query);
@@ -55,4 +59,20 @@ export const getRoomStatus = async (): Promise<RoomStatus[]> => {
   `;
   const result = await pool.query(query);
   return result.rows;
+};
+
+export const getDashboardData = async (): Promise<DashboardData> => {
+  const [stats, revenueTrends, recentBookings, roomStatus] = await Promise.all([
+    getStats(),
+    getRevenueTrends(),
+    getRecentBookings(),
+    getRoomStatus()
+  ]);
+
+  return {
+    stats,
+    revenueTrends,
+    recentBookings,
+    roomStatus
+  };
 };

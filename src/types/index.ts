@@ -118,3 +118,10 @@ export interface UpdateRoomInput {
   price?: number;
   status?: 'Available' | 'Booked' | 'Maintenance';
 }
+
+export interface DashboardData {
+  stats: DashboardStats;
+  revenueTrends: RevenueTrend[];
+  recentBookings: Booking[];
+  roomStatus: RoomStatus[];
+}
