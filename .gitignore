@@ -3,3 +3,4 @@ node_modules
 dist
 schema.sql
 postman_collection.json
+uploads/*

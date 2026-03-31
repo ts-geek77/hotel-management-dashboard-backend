@@ -1,23 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as bookingService from '../services/bookingService';
 import { z } from 'zod';
-
-const createBookingSchema = z.object({
-  guestId: z.number().int().positive(),
-  roomId: z.number().int().positive(),
-  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
-  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
-  status: z.enum(['Booked', 'Pending', 'Cancelled', 'Checked In', 'Checked Out']).optional()
-});
-
-const updateBookingSchema = z.object({
-  guestId: z.number().int().positive().optional(),
-  roomId: z.number().int().positive().optional(),
-  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)').optional(),
-  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)').optional(),
-  status: z.enum(['Booked', 'Pending', 'Cancelled', 'Checked In', 'Checked Out']).optional(),
-  price: z.number().positive().optional()
-});
+import { createBookingSchema, updateBookingSchema } from '../utils/validators';
 
 export const getAllBookings = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {

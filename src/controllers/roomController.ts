@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import * as roomService from '../services/roomService';
 import { CreateRoomInput, UpdateRoomInput } from '../types';
-
+import { z } from 'zod';
+import { createRoomSchema, updateRoomSchema } from '../utils/validators';
 export const getAllRooms = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
     const { status, type, search } = req.query;
@@ -34,10 +35,14 @@ export const getRoomById = async (req: Request, res: Response, next: NextFunctio
 
 export const createRoom = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
-    const roomData: CreateRoomInput = req.body;
-    if (!roomData.roomNumber || !roomData.roomType || !roomData.price) {
-      return res.status(400).json({ message: 'Missing required room details (roomNumber, roomType, price)' });
+    const validation = createRoomSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: validation.error.issues.map((e: z.ZodIssue) => e.message) 
+      });
     }
+    const roomData: CreateRoomInput = validation.data;
     const newRoom = await roomService.createRoom(roomData);
     return res.status(201).json(newRoom);
   } catch (error) {
@@ -51,7 +56,16 @@ export const updateRoom = async (req: Request, res: Response, next: NextFunction
     if (isNaN(id)) {
       return res.status(400).json({ message: 'Invalid room ID' });
     }
-    const roomData: UpdateRoomInput = req.body;
+    
+    const validation = updateRoomSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: validation.error.issues.map((e: z.ZodIssue) => e.message)
+      });
+    }
+
+    const roomData: UpdateRoomInput = validation.data;
     const updatedRoom = await roomService.updateRoom(id, roomData);
     if (!updatedRoom) {
       return res.status(404).json({ message: 'Room not found' });
