@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as guestService from '../services/guestService';
 import { z } from 'zod';
+import { createGuestSchema } from '../utils/validators';
 
 export const getAllGuests = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
@@ -29,11 +30,6 @@ export const getGuestById = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-const createGuestSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email format'),
-  phone: z.string().min(1, 'Phone is required'),
-});
 
 export const createGuest = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {

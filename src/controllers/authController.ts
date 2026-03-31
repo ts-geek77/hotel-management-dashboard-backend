@@ -3,52 +3,17 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import * as userService from '../services';
 import { z } from 'zod';
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-const registerSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email format'),
-  phone: z.string().min(1, 'Phone is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type LoginInput = z.infer<typeof loginSchema>;
-type RegisterInput = z.infer<typeof registerSchema>;
-type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
-
-const updateProfileSchema = z.object({
-  name: z.string().min(1, 'Name is required').optional(),
-  phone: z.string().min(1, 'Phone is required').optional(),
-});
-
-const changePasswordSchema = z.object({
-  oldPassword: z.string().min(1, 'Old password is required'),
-  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your new password'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "New passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
-type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+import { 
+  loginSchema, 
+  registerSchema, 
+  forgotPasswordSchema, 
+  updateProfileSchema, 
+  changePasswordSchema,
+  LoginInput,
+  RegisterInput,
+  ForgotPasswordInput,
+  ChangePasswordInput
+} from '../utils/validators';
 
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
